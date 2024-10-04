@@ -411,6 +411,15 @@ impl WinitWindowWrapper {
         skia_renderer.swap_buffers();
         if self.ui_state == UIState::FirstFrame {
             skia_renderer.window().set_visible(true);
+            let is_x11 = matches!(
+                skia_renderer.window().window_handle().unwrap().as_raw(),
+                RawWindowHandle::Xlib(_)
+            );
+            if is_x11 && matches!(self.initial_window_size, WindowSize::Maximized) {
+                // WindowAttributes::with_maximized doesn't work reliably on X11, since apparently
+                // we need to maximize the window after it's drawn.
+                skia_renderer.window().set_maximized(true);
+            }
             self.ui_state = UIState::Showing;
         }
         tracy_frame();
